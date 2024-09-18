@@ -158,8 +158,9 @@ resource "aws_db_instance" "database_instance" {
   skip_final_snapshot    = true
   publicly_accessible    = true
   vpc_security_group_ids = [aws_security_group.dbsg.id]
-  username               = "postgres"
-  password               = "dhoni777"
+  username               = var.db_user_name
+  password               = var.db_user_pass
+  
 }
 
 

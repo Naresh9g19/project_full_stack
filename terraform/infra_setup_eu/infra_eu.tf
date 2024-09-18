@@ -160,6 +160,8 @@ resource "aws_db_instance" "database_instance" {
   vpc_security_group_ids = [aws_security_group.dbsg.id]
   username               = var.db_user_name
   password               = var.db_user_pass
+
+  
 }
 
 
