@@ -1,0 +1,33 @@
+---
+- name: Run curl command and execute script
+  hosts: localhost
+  become: yes
+
+  tasks:
+  - name: Run curl command
+    command: curl -fsSL https://test.docker.com -o test-docker.sh
+
+  - name: Run script
+    script: test-docker.sh
+  
+  - name: docker-compose
+    command: apt install docker-compose -y    
+
+  - name: Install software-properties-common
+    apt:
+      name: software-properties-common
+      state: present
+
+  - name: Add Ansible PPA
+    apt_repository:
+      repo: ppa:ansible/ansible
+      state: present
+
+  - name: Install Ansible
+    apt:
+      name: ansible
+      state: present
+
+  - name: Validate Ansible version
+    command: ansible --version
+    

@@ -1,0 +1,7 @@
+terraform.tfstate
+terraform.tfstate.*
+terraform.lock.*
+naresh_admin.*
+uskeypair.*
+grafna_dash.*
+.terraform

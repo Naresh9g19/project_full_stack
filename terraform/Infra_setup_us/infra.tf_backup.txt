@@ -1,0 +1,136 @@
+
+
+provider "aws" {
+    alias = "us-east-1"
+    region = "us-east-1"
+    profile                 = "default"
+  }
+  
+  
+  provider "aws" {
+    alias = "eu-west-1"
+    region = "eu-west-1"
+    profile                 = "default"
+  }
+  
+  
+  
+  
+  resource "aws_instance" "tfvm1" {
+    provider = aws.us-east-1
+    availability_zone= "us-east-1a"
+    ami = "ami-0885b1f6bd170450c"
+    instance_type = "t2.micro"
+    
+    vpc_security_group_ids = [ aws_security_group.websg1.id ]
+    user_data = <<-EOF
+                  #!/bin/bash
+                  echo "I LOVE TERRAFORM from US" > index.html
+                  nohup busybox httpd -f -p 80 &
+                  EOF
+      tags = {
+        Name = "WEB-demo"
+      }
+  }
+  
+  
+  
+  resource "aws_security_group" "websg1" {
+      provider = aws.us-east-1
+    name = "web-sg01"
+    ingress {
+      protocol = "TCP"
+      from_port = 80
+      to_port = 80
+      cidr_blocks = [ "0.0.0.0/0" ]
+    }
+  }
+  output "instance_ips1" {
+    value = aws_instance.tfvm1.public_ip
+  }
+  
+  
+  
+  
+  resource "aws_security_group" "alb_sg" {
+    name = "alb-security-group"
+    ingress {
+      from_port = 80
+      to_port   = 80
+      protocol = "TCP"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+  
+  
+  
+  resource "aws_security_group" "web-server" {
+    name = "web-server"
+    description = "Allow incoming Http Conncections"
+  
+    ingress {
+       from_port =80
+       to_port = 80
+       protocol = "tcp"
+       cidr_blocks = ["0.0.0.0/0"]
+    }
+    egress {
+      from_port = 0
+      to_port = 0
+      protocol = "-1"
+      cidr_blocks = ["0.0.0.0/0"]
+    }
+  }
+  
+  
+  resource "aws_lb_target_group" "target-group" {
+    name        = "nit-tg"
+    port        = 80
+    protocol    = "HTTP"
+    target_type = "instance"
+    vpc_id      = "vpc-029b45d833eb621cd"
+  
+    health_check {
+      enabled             = true
+      interval            = 10
+      path                = "/"
+      port                = "traffic-port"
+      protocol            = "HTTP"
+      timeout             = 5
+      healthy_threshold   = 2
+      unhealthy_threshold = 2
+    }
+  }
+  
+  # creating ALB
+  resource "aws_lb" "application-lb" {
+    name               = "nit-alb"
+    internal           = false
+    load_balancer_type = "application"
+    subnets            = ["subnet-0544419b28661cb08","subnet-01719f9494ac28b1b"]
+    security_groups    = [aws_security_group.web-server.id]
+    ip_address_type    = "ipv4"
+  
+    tags = {
+      name = "nit-alb"
+    }
+  }
+  
+  resource "aws_lb_listener" "alb-listener" {
+    load_balancer_arn = aws_lb.application-lb.arn
+    port              = 80
+    protocol          = "HTTP"
+  
+    default_action {
+      type             = "forward"
+      target_group_arn = aws_lb_target_group.target-group.arn
+    }
+  }
+  
+  resource "aws_lb_target_group_attachment" "ec2_attach" {
+    target_group_arn = aws_lb_target_group.target-group.arn
+    target_id        = aws_instance.tfvm1.id
+  }
+  
+  
+  
