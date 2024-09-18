@@ -60,6 +60,19 @@ variable "allowed_ports" {
 }
 
 
+variable "db_user_name" {
+  description= "db user name"
+  type=string
+}
+
+
+
+variable "db_user_pass" {
+  description= "db user pass"
+  type=string
+}
+
+
 
 
 

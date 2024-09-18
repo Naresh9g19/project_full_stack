@@ -5,3 +5,4 @@ naresh_admin.*
 uskeypair.*
 grafna_dash.*
 .terraform
+terraform_environment_variables.ini
